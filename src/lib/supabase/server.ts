@@ -1,18 +1,25 @@
-import { createServerClient } from '@supabase/ssr'
+// src/lib/supabase/server.ts
 import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Supabase URL and anon key must be provided in .env.local")
-}
-
-export function createClient() {
+export const createClient = () => {
   const cookieStore = cookies()
-  return createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      get: (key) => cookieStore.get(key)?.value,
-    },
-  })
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          try { cookieStore.set({ name, value, ...options }) } catch {}
+        },
+        remove(name: string, options: any) {
+          try { cookieStore.set({ name, value: '', ...options }) } catch {}
+        },
+      },
+    }
+  )
 }
